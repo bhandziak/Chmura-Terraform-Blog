@@ -1,0 +1,55 @@
+---
+- name: Instalacja Dockera i uruchomienie WordPressa
+  hosts: wordpress
+  become: yes # sudo permissions
+  vars:
+    app_dir: /home/wp-app
+    # Bucket Name from Google Cloud Storage
+    bucket_name: "project-xxx" 
+
+  tasks:
+    - name: Installing required system packages
+      apt:
+        name: ['ca-certificates', 'curl', 'gnupg']
+        state: present
+        update_cache: yes
+
+    - name: Installing Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/debian/gpg
+        state: present
+
+    - name: Adding Docker repository
+      apt_repository:
+        repo: "deb https://download.docker.com/linux/debian bullseye stable"
+        state: present
+
+    - name: Installing Docker and plugins
+      apt:
+        name: ['docker-ce', 'docker-ce-cli', 'containerd.io', 'docker-buildx-plugin', 'docker-compose-plugin']
+        state: present
+        update_cache: yes
+
+    - name: Creating application directory 
+      file:
+        path: "{{ app_dir }}/data"
+        state: directory
+        mode: '0755'
+
+    - name: Copying Docker Compose and .env files to the server
+      copy:
+        src: "../{{ item }}"
+        dest: "{{ app_dir }}/{{ item }}"
+      loop:
+        - docker-compose.yml
+        - .env
+
+    - name: Downloading SQL file from GCP bucket
+      command: gsutil cp gs://{{ bucket_name }}/wordpress.sql {{ app_dir }}/data/wordpress.sql
+      args:
+        creates: "{{ app_dir }}/data/wordpress.sql"
+
+    - name: Run Docker Compose to start WordPress
+      command: docker compose up -d
+      args:
+        chdir: "{{ app_dir }}"
