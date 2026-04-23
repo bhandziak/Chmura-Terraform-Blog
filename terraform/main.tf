@@ -4,7 +4,7 @@ resource "google_compute_firewall" "web_access" {
   network = "default"
   allow {
     protocol = "tcp"
-    ports    = ["80", "8080", "22"]
+    ports    = ["80", "22"]
   }
   source_ranges = ["0.0.0.0/0"]
   target_tags   = ["wordpress-server"]
@@ -36,6 +36,7 @@ resource "google_compute_instance" "wordpress_vm" {
     ssh-keys = <<EOT
     bartek:${file("~/.ssh/id_rsa.pub")}
     teacher:${file("../keys/teacher_id_rsa.pub")}
+    konrad:${file("../keys/konrad.pub")}
   EOT
   }
 }
