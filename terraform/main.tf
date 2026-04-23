@@ -1,18 +1,3 @@
-# Bucket conf
-resource "google_storage_bucket" "wp_assets" {
-  name          = "${var.project_id}-wp-assets"
-  location      = var.region
-  force_destroy = true
-  uniform_bucket_level_access = true
-}
-
-# Upload SQL file to the bucket
-resource "google_storage_bucket_object" "sql_backup" {
-  name   = "wordpress.sql"
-  bucket = google_storage_bucket.wp_assets.name
-  source = "${path.module}/../data/wordpress.sql"
-}
-
 # Firewall rule to allow HTTP and SSH access
 resource "google_compute_firewall" "web_access" {
   name    = "allow-http-and-ssh"
@@ -27,7 +12,7 @@ resource "google_compute_firewall" "web_access" {
 
 # VM Instance
 resource "google_compute_instance" "wordpress_vm" {
-  name         = "wordpress-docker-instance"
+  name         = "cycling-blog-vm"
   machine_type = "e2-micro"
   tags         = ["wordpress-server"]
 
@@ -48,23 +33,11 @@ resource "google_compute_instance" "wordpress_vm" {
 
   # SSH key
   metadata = {
-    ssh-keys = "ansible:${file("~/.ssh/id_rsa.pub")}"
+    ssh-keys = "bartek:${file("~/.ssh/id_rsa.pub")}"
   }
-}
-
-data "google_compute_default_service_account" "default" {}
-
-resource "google_storage_bucket_iam_member" "viewer" {
-  bucket = google_storage_bucket.wp_assets.name
-  role   = "roles/storage.objectViewer"
-  member = "serviceAccount:${data.google_compute_default_service_account.default.email}"
 }
 
 output "vm_public_ip" {
   value       = google_compute_instance.wordpress_vm.network_interface[0].access_config[0].nat_ip
-  description = "Skopiuj to IP do pliku ansible/inventory.ini"
-}
-
-output "bucket_name" {
-  value = google_storage_bucket.wp_assets.name
+  description = "Public IP address of the WordPress VM instance"
 }

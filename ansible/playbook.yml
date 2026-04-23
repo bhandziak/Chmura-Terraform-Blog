@@ -1,11 +1,9 @@
 ---
-- name: Instalacja Dockera i uruchomienie WordPressa
+- name: Install and Configure WordPress on GCP VM by Ansible
   hosts: wordpress
   become: yes # sudo permissions
   vars:
     app_dir: /home/wp-app
-    # Bucket Name from Google Cloud Storage
-    bucket_name: "project-xxx" 
 
   tasks:
     - name: Installing required system packages
@@ -43,11 +41,6 @@
       loop:
         - docker-compose.yml
         - .env
-
-    - name: Downloading SQL file from GCP bucket
-      command: gsutil cp gs://{{ bucket_name }}/wordpress.sql {{ app_dir }}/data/wordpress.sql
-      args:
-        creates: "{{ app_dir }}/data/wordpress.sql"
 
     - name: Run Docker Compose to start WordPress
       command: docker compose up -d
