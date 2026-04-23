@@ -33,7 +33,10 @@ resource "google_compute_instance" "wordpress_vm" {
 
   # SSH key
   metadata = {
-    ssh-keys = "bartek:${file("~/.ssh/id_rsa.pub")}"
+    ssh-keys = <<EOT
+    bartek:${file("~/.ssh/id_rsa.pub")}
+    teacher:${file("../keys/teacher_id_rsa.pub")}
+  EOT
   }
 }
 
